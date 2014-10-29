@@ -20,10 +20,9 @@ var config = require('./config');
 
 //Set up swig
 app.engine('html', cons.swig);
-swig.init({
-  root: __dirname + '/views',
-  allowErrors: false,
-  filters: swigFilters
+
+Object.keys(swigFilters).forEach(function (name) {
+    swig.setFilter(name, swigFilters[name]);
 });
 
 //App configuration
@@ -36,7 +35,10 @@ app.configure(function(){
   app.use(config.site.baseUrl,express.static(__dirname + '/public'));  
   app.use(express.bodyParser());
   app.use(express.cookieParser(config.site.cookieSecret));
-  app.use(express.session({ secret: config.site.sessionSecret }));
+  app.use(express.session({ 
+    secret: config.site.sessionSecret,
+    key: config.site.cookieKeyName
+  }));
   app.use(express.methodOverride());
   app.use(app.router);
 });
@@ -290,6 +292,8 @@ var middleware = function(req, res, next) {
 
 //Routes
 app.get(config.site.baseUrl, middleware,  routes.index);
+
+app.get(config.site.baseUrl+'db/:database/export/:collection', middleware, routes.exportCollection);
 
 app.get(config.site.baseUrl+'db/:database/:collection/:document', middleware, routes.viewDocument);
 app.put(config.site.baseUrl+'db/:database/:collection/:document', middleware, routes.updateDocument);
